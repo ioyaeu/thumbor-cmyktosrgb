@@ -88,7 +88,8 @@ class Filter(BaseFilter):
         srgb_profile = BytesIO(tiny_srgb)
 
         output_mode = 'RGBA' if 'A' in image.mode else 'RGB'
-        image = ImageCms.profileToProfile(image, embedded_profile, srgb_profile, renderingIntent=0,
+        if image.mode != 'RGB':
+            image = ImageCms.profileToProfile(image, embedded_profile, srgb_profile, renderingIntent=0,
                                           outputMode=output_mode)
 
         self.engine.image = image
