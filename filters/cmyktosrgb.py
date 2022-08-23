@@ -54,7 +54,7 @@ class Filter(BaseFilter):
     phase = thumbor.filters.PHASE_AFTER_LOAD
 
     @filter_method()
-    def cmyktosrgb(self):
+    async def cmyktosrgb(self):
         if not isinstance(self.engine, PILEngine):
             logger.warn('Could not perform profileToProfile conversion: engine is not PIL engine')
             return
@@ -67,15 +67,24 @@ class Filter(BaseFilter):
 
         embedded_profile = image.info.get('icc_profile')
 
+        try:
+            ImageCms.getProfileInfo(BytesIO(embedded_profile))
+        except:
+            logger.warning('Embedded profile is not valid')
+            embedded_profile = None
+
+
         if not embedded_profile:
             logger.debug('Image does not have embedded profile. image mode : {:s}'.format(image.mode))
             if image.mode == 'CMYK':
                 path = self.context.config.ICC_PATH
                 iccfile = self.context.config.ICC_FILE
+                logger.debug(path)
+                logger.debug(iccfile)
                 #path = "/usr/share/color/icc/"
                 #iccfile = "CoatedFOGRA27.icc"
                 filepath = os.path.join(path, iccfile)
-                logger.debug('ICC: Checking for profile in'.format(filepath))
+                logger.debug('ICC: Checking for profile in {:s}'.format(filepath))
                 if os.path.exists(filepath):
                     embedded_profile = filepath
                 else:
